@@ -536,11 +536,34 @@ require('lazy').setup({
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+
+      -- NOTE: Import my personal utils to setup language servers as I like
+      local util = require 'custom.util'
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        pyright = {},
-        ruff_lsp = {},
+        -- FIXME: Pyright and ruff do not play nice at this moment, figure out how LSPs
+        -- work and then reconsider adding it back. For now pylsp does the job
+        -- just fine.
+        -- pyright = {},
+        -- ruff_lsp = {},
+        pylsp = {
+          plugins = {
+            -- linter options
+            ruff = { enabled = true, formatEnabled = true },
+            -- type checker
+            pylsp_mypy = {
+              enabled = true,
+              overrides = { '--python-executable', util.get_python_path(), true },
+              report_progress = true,
+              live_mode = false,
+              dmypy = true,
+            },
+            -- auto-completion options
+            jedi_completion = { fuzzy = true },
+          },
+        },
+
         rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -580,6 +603,9 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format lua code
+        'ruff',
+        'mypy',
+        'jedi_language_server',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
